@@ -42,8 +42,8 @@ class OpenHABApiClient:
     ) -> None:
         """openHAB API Client."""
         self.hass = hass
-        self._base_url = base_url
-        self._rest_url = f"{base_url}/rest"
+        self._base_url = base_url.rstrip("/")
+        self._rest_url = f"{self._base_url}/rest"
         self._username = username
         self._password = password
         self._auth_token = auth_token
@@ -53,8 +53,10 @@ class OpenHABApiClient:
 
         if auth_type == CONF_AUTH_TYPE_TOKEN and auth_token:
             # Use custom auth class for token authentication
-            LOGGER.info("Creating OpenHAB client with token auth")
-            self.openhab = OpenHAB(self._rest_url, http_auth=OpenHABTokenAuth(auth_token))
+            LOGGER.info("Creating OpenHAB client with token auth, token length: %d", len(auth_token))
+            auth = OpenHABTokenAuth(auth_token)
+            LOGGER.info("Auth object created: %s, callable: %s", type(auth), callable(auth))
+            self.openhab = OpenHAB(self._rest_url, http_auth=auth)
         elif auth_type == CONF_AUTH_TYPE_BASIC and username:
             LOGGER.info("Creating OpenHAB client with basic auth")
             self.openhab = OpenHAB(self._rest_url, username, password)
