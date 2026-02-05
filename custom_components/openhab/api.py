@@ -3,12 +3,23 @@ from __future__ import annotations
 
 from typing import Any
 
-import aiohttp
+import httpx
 from openhab import OpenHAB
 
-from .const import CONF_AUTH_TYPE_BASIC, CONF_AUTH_TYPE_TOKEN
+from .const import CONF_AUTH_TYPE_BASIC, CONF_AUTH_TYPE_TOKEN, LOGGER
 
-API_HEADERS = {aiohttp.hdrs.CONTENT_TYPE: "application/json; charset=UTF-8"}
+
+class OpenHABTokenAuth(httpx.Auth):
+    """Custom auth class for openHAB API token authentication."""
+
+    def __init__(self, token: str) -> None:
+        """Initialize with the API token."""
+        self.token = token
+
+    def auth_flow(self, request: httpx.Request):
+        """Add the X-OPENHAB-TOKEN header to the request."""
+        request.headers["X-OPENHAB-TOKEN"] = self.token
+        yield request
 
 
 class ApiClientException(Exception):
@@ -34,16 +45,21 @@ class OpenHABApiClient:
         self._rest_url = f"{base_url}/rest"
         self._username = username
         self._password = password
+        self._auth_token = auth_token
+        self._auth_type = auth_type
 
-        if auth_type == CONF_AUTH_TYPE_TOKEN and auth_token is not None:
-            API_HEADERS["X-OPENHAB-TOKEN"] = auth_token
+        LOGGER.debug("Initializing OpenHAB client with URL: %s, auth_type: %s", self._rest_url, auth_type)
+
+        if auth_type == CONF_AUTH_TYPE_TOKEN and auth_token:
+            # Use custom auth class for token authentication
+            self.openhab = OpenHAB(self._rest_url, http_auth=OpenHABTokenAuth(auth_token))
+            LOGGER.debug("Using token authentication")
+        elif auth_type == CONF_AUTH_TYPE_BASIC and username:
+            self.openhab = OpenHAB(self._rest_url, self._username, self._password)
+            LOGGER.debug("Using basic authentication")
+        else:
             self.openhab = OpenHAB(self._rest_url)
-
-        if auth_type == CONF_AUTH_TYPE_BASIC:
-            if username is not None and len(username) > 0:
-                self.openhab = OpenHAB(self._rest_url, self._username, self._password)
-            else:
-                self.openhab = OpenHAB(self._rest_url)
+            LOGGER.debug("Using no authentication")
 
     async def async_get_version(self) -> str:
         """Get all items from the API."""
