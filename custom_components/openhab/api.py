@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import requests
 from requests.auth import AuthBase
 from openhab import OpenHAB
 
@@ -16,10 +17,10 @@ class OpenHABTokenAuth(AuthBase):
         """Initialize with the API token."""
         self.token = token
 
-    def __call__(self, request):
+    def __call__(self, r: requests.PreparedRequest) -> requests.PreparedRequest:
         """Add the X-OPENHAB-TOKEN header to the request."""
-        request.headers["X-OPENHAB-TOKEN"] = self.token
-        return request
+        r.headers["X-OPENHAB-TOKEN"] = self.token
+        return r
 
 
 class ApiClientException(Exception):
@@ -48,18 +49,18 @@ class OpenHABApiClient:
         self._auth_token = auth_token
         self._auth_type = auth_type
 
-        LOGGER.debug("Initializing OpenHAB client with URL: %s, auth_type: %s", self._rest_url, auth_type)
+        LOGGER.info("Initializing OpenHAB client with URL: %s, auth_type: %s", self._rest_url, auth_type)
 
         if auth_type == CONF_AUTH_TYPE_TOKEN and auth_token:
             # Use custom auth class for token authentication
+            LOGGER.info("Creating OpenHAB client with token auth")
             self.openhab = OpenHAB(self._rest_url, http_auth=OpenHABTokenAuth(auth_token))
-            LOGGER.debug("Using token authentication")
         elif auth_type == CONF_AUTH_TYPE_BASIC and username:
-            self.openhab = OpenHAB(self._rest_url, self._username, self._password)
-            LOGGER.debug("Using basic authentication")
+            LOGGER.info("Creating OpenHAB client with basic auth")
+            self.openhab = OpenHAB(self._rest_url, username, password)
         else:
+            LOGGER.info("Creating OpenHAB client without auth")
             self.openhab = OpenHAB(self._rest_url)
-            LOGGER.debug("Using no authentication")
 
     async def async_get_version(self) -> str:
         """Get all items from the API."""
