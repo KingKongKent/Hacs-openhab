@@ -3,8 +3,7 @@
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_HS_COLOR,
-    COLOR_MODE_BRIGHTNESS,
-    COLOR_MODE_HS,
+    ColorMode,
     LightEntity,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -40,8 +39,8 @@ class OpenHABLightColor(OpenHABEntity, LightEntity):
     """openHAB Color Light class."""
 
     _attr_device_class_map = []
-    _attr_color_mode = COLOR_MODE_BRIGHTNESS
-    _attr_supported_color_modes = {COLOR_MODE_BRIGHTNESS, COLOR_MODE_HS}
+    _attr_color_mode = ColorMode.BRIGHTNESS
+    _attr_supported_color_modes = {ColorMode.BRIGHTNESS, ColorMode.HS}
 
     @property
     def is_on(self):
@@ -90,8 +89,8 @@ class OpenHABLightDimmer(OpenHABEntity, LightEntity):
     """openHAB Dimmer Light class."""
 
     _attr_device_class_map = []
-    _attr_color_mode = COLOR_MODE_BRIGHTNESS
-    _attr_supported_color_modes = {COLOR_MODE_BRIGHTNESS}
+    _attr_color_mode = ColorMode.BRIGHTNESS
+    _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
     @property
     def is_on(self):

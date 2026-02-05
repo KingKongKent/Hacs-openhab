@@ -1,13 +1,9 @@
 """Media Player platform for openHAB."""
 
-from homeassistant.components.media_player import MediaPlayerEntity
-from homeassistant.components.media_player.const import (
-    MEDIA_TYPE_MUSIC,
-    SUPPORT_PLAY,
-    SUPPORT_PAUSE,
-    SUPPORT_PREVIOUS_TRACK,
-    SUPPORT_NEXT_TRACK,
-    SUPPORT_VOLUME_SET,
+from homeassistant.components.media_player import (
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+    MediaType,
 )
 from homeassistant.const import STATE_IDLE, STATE_OFF, STATE_PAUSED, STATE_PLAYING
 from homeassistant.config_entries import ConfigEntry
@@ -19,11 +15,11 @@ from .device_classes_map import MEDIA_PLAYER_DEVICE_CLASS_MAP
 from .entity import OpenHABEntity
 
 SUPPORT_OPENHAB = (
-    SUPPORT_PLAY
-    | SUPPORT_PAUSE
-    | SUPPORT_PREVIOUS_TRACK
-    | SUPPORT_NEXT_TRACK
-    | SUPPORT_VOLUME_SET
+    MediaPlayerEntityFeature.PLAY
+    | MediaPlayerEntityFeature.PAUSE
+    | MediaPlayerEntityFeature.PREVIOUS_TRACK
+    | MediaPlayerEntityFeature.NEXT_TRACK
+    | MediaPlayerEntityFeature.VOLUME_SET
 )
 
 PLAYBACK_DICT = {
@@ -89,7 +85,7 @@ class OpenHABPlayer(OpenHABEntity, MediaPlayerEntity):
     @property
     def media_content_type(self):
         """Content type of current playing media."""
-        return MEDIA_TYPE_MUSIC
+        return MediaType.MUSIC
 
     @property
     def supported_features(self):
