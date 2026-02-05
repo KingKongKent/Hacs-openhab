@@ -19,6 +19,7 @@ class OpenHABEntity(CoordinatorEntity):
 
     coordinator: OpenHABDataUpdateCoordinator
     _attr_device_class_map: List | None
+    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -39,10 +40,10 @@ class OpenHABEntity(CoordinatorEntity):
         self._base_url = self.coordinator.api._base_url
         self._host = strip_ip(self._base_url)
 
-        # Sanitize entity_id to only contain valid characters (lowercase, no dots)
+        # Set the unique_id attribute - let HA generate entity_id automatically
         sanitized_host = sanitize_entity_id(self._host)
         sanitized_name = sanitize_entity_id(self.item.name)
-        self.entity_id = f"{DOMAIN}.{sanitized_host}_{sanitized_name}"
+        self._attr_unique_id = f"{DOMAIN}_{sanitized_host}_{sanitized_name}"
 
         if self.item.unit_of_measure:
             self._attr_native_unit_of_measurement = str(self.item.unit_of_measure)
@@ -54,15 +55,8 @@ class OpenHABEntity(CoordinatorEntity):
 
     @property
     def name(self) -> str:
-        """Return the name of the switch."""
+        """Return the name of the entity."""
         return self.item.label if len(self.item.label) > 0 else self.item.name
-
-    @property
-    def unique_id(self) -> str | None:
-        """Return a unique ID to use for this entity."""
-        sanitized_host = sanitize_entity_id(self._host)
-        sanitized_name = sanitize_entity_id(self.item.name)
-        return f"{DOMAIN}_{sanitized_host}_{sanitized_name}"
 
     @property
     def device_info(self) -> DeviceInfo:

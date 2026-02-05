@@ -6,9 +6,9 @@ from logging import Logger, getLogger
 NAME = "openHAB"
 DOMAIN = "openhab"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "1.0.6"
+VERSION = "1.1.0"
 ATTRIBUTION = "Data provided by openHAB REST API"
-ISSUE_URL = "https://github.com/kubawolanin/ha-openhab/issues"
+ISSUE_URL = "https://github.com/KingKongKent/Hacs-openhab/issues"
 DATA_COORDINATOR_UPDATE_INTERVAL = timedelta(seconds=15)
 LOGGER: Logger = getLogger(__package__)
 
@@ -19,9 +19,11 @@ COVER = "cover"
 DEVICE_TRACKER = "device_tracker"
 LIGHT = "light"
 MEDIA_PLAYER = "media_player"
+NUMBER = "number"
+SELECT = "select"
 SENSOR = "sensor"
 SWITCH = "switch"
-PLATFORMS = [BINARY_SENSOR, COVER, DEVICE_TRACKER, LIGHT, MEDIA_PLAYER, SENSOR, SWITCH]
+PLATFORMS = [BINARY_SENSOR, COVER, DEVICE_TRACKER, LIGHT, MEDIA_PLAYER, NUMBER, SELECT, SENSOR, SWITCH]
 
 
 # Configuration and options

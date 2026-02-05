@@ -10,6 +10,28 @@ from .device_classes_map import SENSOR_DEVICE_CLASS_MAP
 from .entity import OpenHABEntity
 
 
+# Keywords that indicate controllable setpoints (handled by number platform)
+SETPOINT_KEYWORDS = [
+    "manual_temperature",
+    "at_home_temperature", 
+    "away_temperature",
+    "vacation_temperature",
+    "frost_protection_temperature",
+    "setpoint",
+    "target",
+]
+
+
+def is_read_only_sensor(item) -> bool:
+    """Check if item should be a read-only sensor (not a controllable number)."""
+    name_lower = item.name.lower()
+    # Exclude items that are controllable setpoints
+    for keyword in SETPOINT_KEYWORDS:
+        if keyword in name_lower:
+            return False
+    return True
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -25,7 +47,7 @@ async def async_setup_entry(
     sensors = []
     for item in coordinator.data.values():
         LOGGER.debug("Checking item: %s, type_: %s", item.name, item.type_)
-        if item.type_ in ITEMS_MAP[SENSOR]:
+        if item.type_ in ITEMS_MAP[SENSOR] and is_read_only_sensor(item):
             LOGGER.debug("Adding sensor: %s", item.name)
             sensors.append(OpenHABSensor(hass, coordinator, item))
 
