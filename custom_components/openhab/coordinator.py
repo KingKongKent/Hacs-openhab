@@ -35,9 +35,18 @@ class OpenHABDataUpdateCoordinator(DataUpdateCoordinator):
         try:
             if self.version is None or len(self.version) == 0:
                 self.version = await self.api.async_get_version()
+                LOGGER.info("Connected to openHAB version: %s", self.version)
 
             items = await self.api.async_get_items()
             self.is_online = bool(items)
+            
+            if items:
+                LOGGER.info("Fetched %d items from openHAB", len(items))
+                for item_name, item in items.items():
+                    LOGGER.debug("Item: %s, Type: %s", item_name, item.type_)
+            else:
+                LOGGER.warning("No items fetched from openHAB. Make sure you have Items (not just Things) configured in openHAB.")
+            
             return items
 
         except ApiClientException as exception:
