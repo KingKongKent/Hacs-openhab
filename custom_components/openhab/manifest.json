@@ -8,7 +8,7 @@
     "zeroconf",
     "python-openhab==2.16.2"
   ],
-  "version": "0.0.2",
+  "version": "1.0.1",
   "config_flow": true,
   "codeowners": [
     "@kubawolanin"
