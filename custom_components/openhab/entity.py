@@ -11,7 +11,7 @@ from openhab import items
 from .const import ATTRIBUTION, DOMAIN, NAME, VERSION
 from .coordinator import OpenHABDataUpdateCoordinator
 from .icons_map import ICONS_MAP, ITEM_TYPE_MAP
-from .utils import strip_ip
+from .utils import sanitize_entity_id, strip_ip
 
 
 class OpenHABEntity(CoordinatorEntity):
@@ -39,7 +39,10 @@ class OpenHABEntity(CoordinatorEntity):
         self._base_url = self.coordinator.api._base_url
         self._host = strip_ip(self._base_url)
 
-        self.entity_id = f"{DOMAIN}_{self._host}_{self.item.name}"
+        # Sanitize entity_id to only contain valid characters (lowercase, no dots)
+        sanitized_host = sanitize_entity_id(self._host)
+        sanitized_name = sanitize_entity_id(self.item.name)
+        self.entity_id = f"{DOMAIN}.{sanitized_host}_{sanitized_name}"
 
         if self.item.unit_of_measure:
             self._attr_native_unit_of_measurement = str(self.item.unit_of_measure)
@@ -57,7 +60,9 @@ class OpenHABEntity(CoordinatorEntity):
     @property
     def unique_id(self) -> str | None:
         """Return a unique ID to use for this entity."""
-        return f"{DOMAIN}_{self._host}_{self.item.name}"
+        sanitized_host = sanitize_entity_id(self._host)
+        sanitized_name = sanitize_entity_id(self.item.name)
+        return f"{DOMAIN}_{sanitized_host}_{sanitized_name}"
 
     @property
     def device_info(self) -> DeviceInfo:
