@@ -17,15 +17,18 @@ _Component to integrate with [openHAB][openHAB]._
 
 ## Supported Platforms
 
-| Platform         | Item types                     |
-| ---------------- | ------------------------------ |
-| `binary_sensor`  | `Contact`                      |
-| `sensor`         | `String`, `Number`, `DateTime` |
-| `switch`         | `Switch`                       |
-| `cover`          | `Rollershutter`                |
-| `device_tracker` | `Location`                     |
-| `light`          | `Color`, `Dimmer`              |
-| `media_player`   | `Player`                       |
+| Platform         | Item types                     | Description                    |
+| ---------------- | ------------------------------ | ------------------------------ |
+| `climate`        | `Group` (thermostats)          | Full thermostat control        |
+| `binary_sensor`  | `Contact`                      | Door/window sensors            |
+| `sensor`         | `String`, `Number`, `DateTime` | Read-only values               |
+| `number`         | `Number:Temperature`           | Controllable setpoints         |
+| `select`         | `String` (with options)        | Mode selection                 |
+| `switch`         | `Switch`                       | On/off switches                |
+| `cover`          | `Rollershutter`                | Blinds/shutters                |
+| `device_tracker` | `Location`                     | GPS tracking                   |
+| `light`          | `Color`, `Dimmer`              | Lights with color/brightness   |
+| `media_player`   | `Player`                       | Media controls                 |
 
 ## HACS Installation
 
