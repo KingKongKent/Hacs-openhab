@@ -130,12 +130,12 @@ class OpenHABFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             client = OpenHABApiClient(
                 self.hass, base_url, auth_type, auth_token, username, password
-            )  # pylint: disable=broad-except
+            )
             await client.async_get_version()
             return True
         except Exception as error:  # pylint: disable=broad-except
-            raise error
-        return False
+            LOGGER.error("Failed to connect to openHAB: %s", error)
+            return False
 
 
 class OpenHABOptionsFlowHandler(config_entries.OptionsFlow):

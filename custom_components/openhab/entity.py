@@ -71,7 +71,6 @@ class OpenHABEntity(CoordinatorEntity):
             model=version,
             manufacturer=NAME,
             configuration_url=self._base_url,
-            entry_type="service",
         )
 
     @property
