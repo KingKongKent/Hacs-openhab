@@ -11,29 +11,6 @@ from .const import DOMAIN, LOGGER
 from .entity import OpenHABEntity
 
 
-# Items that contain these keywords are controllable setpoints
-SETPOINT_KEYWORDS = [
-    "manual_temperature",
-    "at_home_temperature",
-    "away_temperature",
-    "vacation_temperature",
-    "frost_protection_temperature",
-    "setpoint",
-    "target",
-]
-
-
-def is_controllable_number(item) -> bool:
-    """Check if an item is a controllable number (not read-only)."""
-    name_lower = item.name.lower()
-    # Check if it's a temperature item that's likely a setpoint
-    if item.type_.startswith("Number"):
-        for keyword in SETPOINT_KEYWORDS:
-            if keyword in name_lower:
-                return True
-    return False
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -43,10 +20,39 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
+    
+    LOGGER.info("Number platform: coordinator.data has %d items, raw_items has %d items", 
+                len(coordinator.data) if coordinator.data else 0, 
+                len(coordinator.raw_items) if coordinator.raw_items else 0)
+    
     for item in coordinator.data.values():
-        if is_controllable_number(item):
-            LOGGER.debug("Adding number entity: %s", item.name)
-            entities.append(OpenHABNumber(hass, coordinator, item))
+        # Skip items with no type
+        if not item.type_:
+            continue
+            
+        # Only Number items that are NOT read-only
+        if item.type_.startswith("Number"):
+            raw_item = coordinator.raw_items.get(item.name, {})
+            state_desc = raw_item.get("stateDescription", {})
+            is_read_only = state_desc.get("readOnly", True)
+            has_min = state_desc.get("minimum") is not None
+            has_max = state_desc.get("maximum") is not None
+            
+            LOGGER.debug("Number check: %s - type=%s, readOnly=%s, hasMin=%s, hasMax=%s", 
+                        item.name, item.type_, is_read_only, has_min, has_max)
+            
+            # Skip read-only items (like current temperature readings)
+            if is_read_only:
+                continue
+            
+            # Must have min/max defined (indicates it's a setpoint)
+            if has_min and has_max:
+                LOGGER.info("Adding number entity: %s (min=%s, max=%s, step=%s)", 
+                           item.name, 
+                           state_desc.get("minimum"),
+                           state_desc.get("maximum"),
+                           state_desc.get("step", 0.5))
+                entities.append(OpenHABNumber(hass, coordinator, item, raw_item))
 
     LOGGER.info("Setting up %d number entities", len(entities))
     async_add_entities(entities)
@@ -55,10 +61,20 @@ async def async_setup_entry(
 class OpenHABNumber(OpenHABEntity, NumberEntity):
     """openHAB Number class for controlling values."""
 
+    _attr_device_class = None
     _attr_mode = NumberMode.BOX
-    _attr_native_min_value = 5.0
-    _attr_native_max_value = 35.0
-    _attr_native_step = 0.5
+
+    def __init__(self, hass, coordinator, item, raw_item):
+        """Initialize the number entity."""
+        super().__init__(hass, coordinator, item)
+        self._attr_device_class_map = {}
+        self._raw_item = raw_item
+        
+        # Get min/max/step from stateDescription
+        state_desc = raw_item.get("stateDescription", {})
+        self._attr_native_min_value = float(state_desc.get("minimum", 5))
+        self._attr_native_max_value = float(state_desc.get("maximum", 35))
+        self._attr_native_step = float(state_desc.get("step", 0.5))
 
     @property
     def native_value(self) -> float | None:

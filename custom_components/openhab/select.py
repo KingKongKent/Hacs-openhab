@@ -20,18 +20,22 @@ async def async_setup_entry(
 
     entities = []
     for item in coordinator.data.values():
-        # Check if item has command options (selectable values)
-        if hasattr(item, 'commandDescription') or item.type_ == "String":
-            # Get the raw item data to check for command options
-            try:
-                raw_item = await hass.async_add_executor_job(
-                    coordinator.api.openhab.get_item_raw, item.name
-                )
-                if raw_item.get("commandDescription", {}).get("commandOptions"):
-                    LOGGER.debug("Adding select entity: %s", item.name)
-                    entities.append(OpenHABSelect(hass, coordinator, item, raw_item))
-            except Exception as e:
-                LOGGER.debug("Could not get command options for %s: %s", item.name, e)
+        # Only String items with commandOptions that are NOT read-only
+        if item.type_ == "String":
+            raw_item = coordinator.raw_items.get(item.name, {})
+            state_desc = raw_item.get("stateDescription", {})
+            cmd_desc = raw_item.get("commandDescription", {})
+            cmd_opts = cmd_desc.get("commandOptions", [])
+            
+            # Skip read-only items (those are for sensor platform)
+            if state_desc.get("readOnly", False):
+                continue
+            
+            # Must have command options to be a select
+            if cmd_opts:
+                LOGGER.info("Adding select entity: %s with %d options (readOnly=%s)", 
+                           item.name, len(cmd_opts), state_desc.get("readOnly"))
+                entities.append(OpenHABSelect(hass, coordinator, item, raw_item))
 
     LOGGER.info("Setting up %d select entities", len(entities))
     async_add_entities(entities)
@@ -40,14 +44,15 @@ async def async_setup_entry(
 class OpenHABSelect(OpenHABEntity, SelectEntity):
     """openHAB Select class for controlling options."""
 
+    _attr_device_class = None  # Select entities don't have device classes
+
     def __init__(self, hass, coordinator, item, raw_item):
         """Initialize the select entity."""
         super().__init__(hass, coordinator, item)
         self._raw_item = raw_item
         self._options_map = {}  # command -> label
         self._labels_map = {}   # label -> command
-        
-        # Parse command options
+        self._attr_device_class_map = {}  # Not used for select, but required by parent
         cmd_opts = raw_item.get("commandDescription", {}).get("commandOptions", [])
         for opt in cmd_opts:
             cmd = opt.get("command", "")

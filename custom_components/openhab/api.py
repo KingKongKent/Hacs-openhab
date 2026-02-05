@@ -74,6 +74,12 @@ class OpenHABApiClient:
         """Get all items from the API."""
         return await self.hass.async_add_executor_job(self.openhab.fetch_all_items)
 
+    async def async_get_items_raw(self) -> list[dict[str, Any]]:
+        """Get all items as raw dicts from the REST API."""
+        return await self.hass.async_add_executor_job(
+            self.openhab.req_get, "/items?recursive=false"
+        )
+
     async def async_get_item(self, item_name: str) -> dict[str, Any]:
         """Get item from the API."""
         return await self.hass.async_add_executor_job(self.openhab.get_item, item_name)

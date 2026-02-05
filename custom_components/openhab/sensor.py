@@ -10,28 +10,6 @@ from .device_classes_map import SENSOR_DEVICE_CLASS_MAP
 from .entity import OpenHABEntity
 
 
-# Keywords that indicate controllable setpoints (handled by number platform)
-SETPOINT_KEYWORDS = [
-    "manual_temperature",
-    "at_home_temperature", 
-    "away_temperature",
-    "vacation_temperature",
-    "frost_protection_temperature",
-    "setpoint",
-    "target",
-]
-
-
-def is_read_only_sensor(item) -> bool:
-    """Check if item should be a read-only sensor (not a controllable number)."""
-    name_lower = item.name.lower()
-    # Exclude items that are controllable setpoints
-    for keyword in SETPOINT_KEYWORDS:
-        if keyword in name_lower:
-            return False
-    return True
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -46,10 +24,40 @@ async def async_setup_entry(
 
     sensors = []
     for item in coordinator.data.values():
-        LOGGER.debug("Checking item: %s, type_: %s", item.name, item.type_)
-        if item.type_ in ITEMS_MAP[SENSOR] and is_read_only_sensor(item):
-            LOGGER.debug("Adding sensor: %s", item.name)
-            sensors.append(OpenHABSensor(hass, coordinator, item))
+        # Skip items with no type
+        if not item.type_:
+            continue
+            
+        if item.type_ not in ITEMS_MAP[SENSOR]:
+            continue
+            
+        raw_item = coordinator.raw_items.get(item.name, {})
+        state_desc = raw_item.get("stateDescription", {})
+        cmd_desc = raw_item.get("commandDescription", {})
+        
+        # For Number items: only include if readOnly=True OR no min/max defined
+        if item.type_.startswith("Number"):
+            is_read_only = state_desc.get("readOnly", True)
+            has_range = state_desc.get("minimum") is not None and state_desc.get("maximum") is not None
+            
+            if is_read_only or not has_range:
+                LOGGER.debug("Adding sensor: %s (readOnly=%s, hasRange=%s)", item.name, is_read_only, has_range)
+                sensors.append(OpenHABSensor(hass, coordinator, item))
+            continue
+        
+        # For String items: only include if readOnly=True OR no commandOptions
+        if item.type_ == "String":
+            is_read_only = state_desc.get("readOnly", True)
+            has_options = bool(cmd_desc.get("commandOptions", []))
+            
+            if is_read_only or not has_options:
+                LOGGER.debug("Adding string sensor: %s (readOnly=%s, hasOptions=%s)", item.name, is_read_only, has_options)
+                sensors.append(OpenHABSensor(hass, coordinator, item))
+            continue
+        
+        # Other types: add as sensor
+        LOGGER.debug("Adding sensor: %s", item.name)
+        sensors.append(OpenHABSensor(hass, coordinator, item))
 
     LOGGER.info("Setting up %d sensors from %d items", len(sensors), len(coordinator.data))
     async_add_entities(sensors)

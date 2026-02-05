@@ -40,6 +40,12 @@ class OpenHABEntity(CoordinatorEntity):
         self._base_url = self.coordinator.api._base_url
         self._host = strip_ip(self._base_url)
 
+        # Check if this item belongs to a group (device)
+        self._parent_group = self.coordinator.item_to_group.get(item.name)
+        self._group_info = None
+        if self._parent_group:
+            self._group_info = self.coordinator.groups.get(self._parent_group)
+
         # Set the unique_id attribute - let HA generate entity_id automatically
         sanitized_host = sanitize_entity_id(self._host)
         sanitized_name = sanitize_entity_id(self.item.name)
@@ -60,10 +66,30 @@ class OpenHABEntity(CoordinatorEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
+        """Return device info - use group as device if available."""
         version = VERSION
         oh_version = self.coordinator.version
         if oh_version is not None:
             version = oh_version
+
+        # If item belongs to a group, use that group as the device
+        if self._group_info:
+            group_name = self._group_info.get("name", "")
+            group_label = self._group_info.get("label", group_name)
+            tags = self._group_info.get("tags", [])
+            
+            # Determine device type from tags
+            device_model = "Thermostat" if "Equipment" in tags else "Device"
+            
+            return DeviceInfo(
+                identifiers={(DOMAIN, f"{self._host}_{group_name}")},
+                name=group_label,
+                model=device_model,
+                manufacturer="openHAB",
+                via_device=(DOMAIN, self._host),
+            )
+
+        # Fallback to main openHAB device
         return DeviceInfo(
             identifiers={(DOMAIN, self._host)},
             name=f"{NAME} - {self._host}",
