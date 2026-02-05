@@ -1,17 +1,16 @@
 {
   "domain": "openhab",
   "name": "openHAB",
-  "documentation": "https://github.com/kubawolanin/ha-openhab",
+  "documentation": "https://github.com/KingKongKent/Hacs-openhab",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/kubawolanin/ha-openhab/issues",
+  "issue_tracker": "https://github.com/KingKongKent/Hacs-openhab/issues",
   "requirements": [
-    "zeroconf",
     "python-openhab==2.16.2"
   ],
   "version": "1.0.1",
   "config_flow": true,
   "codeowners": [
-    "@kubawolanin"
+    "@KingKongKent"
   ],
   "homeassistant": "2024.1.0"
 }
