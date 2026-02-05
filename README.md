@@ -4,16 +4,18 @@
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
 [![hacs][hacsbadge]][hacs]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 ![][maintenance-shield]
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
 
 _Component to integrate with [openHAB][openHAB]._
 
-**This is a Work in Progress repo!**
+> **Note:** This is a fork of [kubawolanin/ha-openhab](https://github.com/kubawolanin/ha-openhab) updated for compatibility with Home Assistant 2024.x and later.
 
-**This component will set up the following platforms.**
+## Requirements
+
+- Home Assistant 2024.1.0 or later
+- openHAB 3.x or 4.x
+
+## Supported Platforms
 
 | Platform         | Item types                     |
 | ---------------- | ------------------------------ |
@@ -22,20 +24,15 @@ _Component to integrate with [openHAB][openHAB]._
 | `switch`         | `Switch`                       |
 | `cover`          | `Rollershutter`                |
 | `device_tracker` | `Location`                     |
-
-In the future this integration will also support the following platforms:
-
-| Platform       | Item types        |
-| -------------- | ----------------- |
-| `light`        | `Color`, `Dimmer` |
-| `camera`       | `Image`           |
-| `media_player` | `Player`          |
+| `light`          | `Color`, `Dimmer`              |
+| `media_player`   | `Player`                       |
 
 ## HACS Installation
 
 1. Go to http://homeassistant.local:8123/hacs/integrations
-1. Add `https://github.com/kubawolanin/ha-openhab` custom integration repository
+1. Add `https://github.com/KingKongKent/Hacs-openhab` custom integration repository
 1. Download the openHAB repository
+1. Restart Home Assistant
 1. Go to http://homeassistant.local:8123/config/integrations and add new integration
 1. Choose "openHAB" from the list and follow the config flow steps
 
@@ -85,21 +82,18 @@ When you add/remove Items in openHAB, simply reload the integration in Home Assi
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
+## Credits
+
+This integration is based on the original work by [Kuba Wolanin](https://github.com/kubawolanin/ha-openhab).
+
 ---
 
 [openhab]: https://openhab.org
-[buymecoffee]: https://www.buymeacoffee.com/kubawolanin
-[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/kubawolanin/ha-openhab.svg?style=for-the-badge
-[commits]: https://github.com/kubawolanin/ha-openhab/commits/master
-[hacs]: https://github.com/ludeeus/hacs
+[commits-shield]: https://img.shields.io/github/commit-activity/y/KingKongKent/Hacs-openhab.svg?style=for-the-badge
+[commits]: https://github.com/KingKongKent/Hacs-openhab/commits/master
+[hacs]: https://github.com/hacs/integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[discord]: https://discord.gg/Qa5fW2R
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
-[exampleimg]: example.png
-[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
-[forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/kubawolanin/ha-openhab.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-Kuba%20Wolanin%20%40kubawolanin-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/kubawolanin/ha-openhab.svg?style=for-the-badge
-[releases]: https://github.com/kubawolanin/ha-openhab/releases
+[license-shield]: https://img.shields.io/github/license/KingKongKent/Hacs-openhab.svg?style=for-the-badge
+[maintenance-shield]: https://img.shields.io/badge/maintainer-KingKongKent-blue.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/KingKongKent/Hacs-openhab.svg?style=for-the-badge
+[releases]: https://github.com/KingKongKent/Hacs-openhab/releases
