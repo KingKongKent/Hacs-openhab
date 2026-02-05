@@ -3,23 +3,23 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
+from requests.auth import AuthBase
 from openhab import OpenHAB
 
 from .const import CONF_AUTH_TYPE_BASIC, CONF_AUTH_TYPE_TOKEN, LOGGER
 
 
-class OpenHABTokenAuth(httpx.Auth):
-    """Custom auth class for openHAB API token authentication."""
+class OpenHABTokenAuth(AuthBase):
+    """Custom auth class for openHAB API token authentication (requests library)."""
 
     def __init__(self, token: str) -> None:
         """Initialize with the API token."""
         self.token = token
 
-    def auth_flow(self, request: httpx.Request):
+    def __call__(self, request):
         """Add the X-OPENHAB-TOKEN header to the request."""
         request.headers["X-OPENHAB-TOKEN"] = self.token
-        yield request
+        return request
 
 
 class ApiClientException(Exception):

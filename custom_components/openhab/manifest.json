@@ -7,7 +7,7 @@
   "requirements": [
     "python-openhab==2.16.2"
   ],
-  "version": "1.0.2",
+  "version": "1.0.3",
   "config_flow": true,
   "codeowners": [
     "@KingKongKent"
