@@ -36,6 +36,19 @@ HVAC_MODE_TO_OPENHAB = {
 }
 
 
+# Map openHAB modes to temperature item keywords (case-insensitive matching)
+MODE_TO_TEMP_KEYWORD = {
+    "MANUAL": "manual_temperature",
+    "SCHEDULE": "at_home_temperature",  # Schedule uses at_home as default
+    "HOME": "at_home_temperature",  # HOME state = at home
+    "AWAY": "away_temperature",
+    "VACATION": "vacation_temperature",
+    "PAUSE": "frost_protection_temperature",  # PAUSE = frost protection
+    "FROST_PROTECTION": "frost_protection_temperature",
+    "OVERRIDE": "at_home_temperature",  # Override = at home override
+}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -61,7 +74,7 @@ async def async_setup_entry(
         # Check if this group has thermostat items
         mode_item = None
         current_temp_item = None
-        target_temp_item = None
+        temp_items = {}  # keyword -> item mapping
         raw_mode_item = None
         
         for item_name, item in group_items.items():
@@ -85,19 +98,30 @@ async def async_setup_entry(
                     if current_temp_item is None or "room" in name_lower:
                         current_temp_item = item
             
-            # Find target/setpoint temperature (writable Number:Temperature)
+            # Collect all writable temperature setpoints
+            # Match patterns like Manual_temperature, At_Home_temperature, etc. (case insensitive)
             if item.type_.startswith("Number") and not state_desc.get("readOnly", True):
-                if "manual_temperature" in name_lower or "at_home_temperature" in name_lower:
-                    if target_temp_item is None or "manual" in name_lower:
-                        target_temp_item = item
+                # Map various naming patterns to standard keywords
+                temp_patterns = [
+                    ("manual_temperature", ["manual_temperature"]),
+                    ("at_home_temperature", ["at_home_temperature", "athome_temperature", "home_temperature"]),
+                    ("away_temperature", ["away_temperature"]),
+                    ("vacation_temperature", ["vacation_temperature"]),
+                    ("frost_protection_temperature", ["frost_protection_temperature", "frostprotection_temperature"]),
+                ]
+                for keyword, patterns in temp_patterns:
+                    if any(p in name_lower for p in patterns):
+                        temp_items[keyword] = item
+                        break
         
         # Create climate entity if we have the required items
-        if mode_item and current_temp_item and target_temp_item:
-            LOGGER.info("Creating climate entity for group: %s", group_name)
+        if mode_item and current_temp_item and temp_items:
+            LOGGER.info("Creating climate entity for group: %s with %d temp setpoints", 
+                       group_name, len(temp_items))
             entities.append(OpenHABClimate(
                 hass, coordinator, group_info, 
                 mode_item, raw_mode_item,
-                current_temp_item, target_temp_item
+                current_temp_item, temp_items
             ))
 
     LOGGER.info("Setting up %d climate entities", len(entities))
@@ -128,7 +152,7 @@ class OpenHABClimate(ClimateEntity):
         mode_item,
         raw_mode_item: dict,
         current_temp_item,
-        target_temp_item,
+        temp_items: dict,
     ) -> None:
         """Initialize the climate entity."""
         self.hass = hass
@@ -137,7 +161,7 @@ class OpenHABClimate(ClimateEntity):
         self._mode_item = mode_item
         self._raw_mode_item = raw_mode_item
         self._current_temp_item = current_temp_item
-        self._target_temp_item = target_temp_item
+        self._temp_items = temp_items  # keyword -> item mapping
         
         self._base_url = coordinator.api._base_url
         self._host = strip_ip(self._base_url)
@@ -147,8 +171,9 @@ class OpenHABClimate(ClimateEntity):
         sanitized_name = sanitize_entity_id(group_name)
         self._attr_unique_id = f"{DOMAIN}_{sanitized_host}_{sanitized_name}_climate"
         
-        # Get min/max from target temp item
-        raw_target = coordinator.raw_items.get(target_temp_item.name, {})
+        # Get min/max from first available temp item
+        first_temp_item = next(iter(temp_items.values()))
+        raw_target = coordinator.raw_items.get(first_temp_item.name, {})
         state_desc = raw_target.get("stateDescription", {})
         if state_desc.get("minimum") is not None:
             self._attr_min_temp = float(state_desc.get("minimum"))
@@ -206,12 +231,44 @@ class OpenHABClimate(ClimateEntity):
 
     @property
     def target_temperature(self) -> float | None:
-        """Return the target temperature."""
-        item = self.coordinator.data.get(self._target_temp_item.name)
-        if item and item._state is not None:
-            if isinstance(item._state, (int, float)):
-                return float(item._state)
+        """Return the target temperature based on current mode."""
+        # Get current mode
+        mode_item = self.coordinator.data.get(self._mode_item.name)
+        current_mode = str(mode_item._state).upper() if mode_item and mode_item._state else "MANUAL"
+        
+        # Find the appropriate temperature item for this mode
+        temp_keyword = MODE_TO_TEMP_KEYWORD.get(current_mode, "manual_temperature")
+        target_item = self._temp_items.get(temp_keyword)
+        
+        LOGGER.debug("Mode: %s -> keyword: %s -> item: %s (available: %s)", 
+                    current_mode, temp_keyword, 
+                    target_item.name if target_item else None,
+                    list(self._temp_items.keys()))
+        
+        # Fallback to first available temp item if mode-specific not found
+        if not target_item:
+            target_item = next(iter(self._temp_items.values()), None)
+            LOGGER.debug("Fallback to: %s", target_item.name if target_item else None)
+        
+        if target_item:
+            item = self.coordinator.data.get(target_item.name)
+            if item and item._state is not None:
+                if isinstance(item._state, (int, float)):
+                    return float(item._state)
         return None
+
+    def _get_current_target_item(self):
+        """Get the temperature item for the current mode."""
+        mode_item = self.coordinator.data.get(self._mode_item.name)
+        current_mode = str(mode_item._state).upper() if mode_item and mode_item._state else "MANUAL"
+        
+        temp_keyword = MODE_TO_TEMP_KEYWORD.get(current_mode, "manual_temperature")
+        target_item = self._temp_items.get(temp_keyword)
+        
+        if not target_item:
+            target_item = next(iter(self._temp_items.values()), None)
+        
+        return target_item
 
     @property
     def hvac_mode(self) -> HVACMode:
@@ -235,16 +292,21 @@ class OpenHABClimate(ClimateEntity):
         return None
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
-        """Set new target temperature."""
+        """Set new target temperature based on current mode."""
         if ATTR_TEMPERATURE in kwargs:
             temp = kwargs[ATTR_TEMPERATURE]
-            LOGGER.debug("Setting %s to %s", self._target_temp_item.name, temp)
-            await self.hass.async_add_executor_job(
-                self.coordinator.api.openhab.req_post,
-                f"/items/{self._target_temp_item.name}",
-                str(temp),
-            )
-            await self.coordinator.async_request_refresh()
+            # Get the correct temperature item for current mode
+            target_item = self._get_current_target_item()
+            if target_item:
+                LOGGER.debug("Setting %s to %s (mode-based)", target_item.name, temp)
+                await self.hass.async_add_executor_job(
+                    self.coordinator.api.openhab.req_post,
+                    f"/items/{target_item.name}",
+                    str(temp),
+                )
+                await self.coordinator.async_request_refresh()
+            else:
+                LOGGER.warning("No temperature item found for current mode")
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new HVAC mode."""

@@ -1,4 +1,4 @@
-# openHAB custom integration for Home Assistant
+# openHAB Integration for Home Assistant
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
@@ -17,77 +17,78 @@ _Component to integrate with [openHAB][openHAB]._
 
 ## Supported Platforms
 
-| Platform         | Item types                     | Description                    |
-| ---------------- | ------------------------------ | ------------------------------ |
-| `climate`        | `Group` (thermostats)          | Full thermostat control        |
-| `binary_sensor`  | `Contact`                      | Door/window sensors            |
-| `sensor`         | `String`, `Number`, `DateTime` | Read-only values               |
-| `number`         | `Number:Temperature`           | Controllable setpoints         |
-| `select`         | `String` (with options)        | Mode selection                 |
-| `switch`         | `Switch`                       | On/off switches                |
-| `cover`          | `Rollershutter`                | Blinds/shutters                |
-| `device_tracker` | `Location`                     | GPS tracking                   |
-| `light`          | `Color`, `Dimmer`              | Lights with color/brightness   |
-| `media_player`   | `Player`                       | Media controls                 |
+| Platform         | Item types                     | Description                              |
+| ---------------- | ------------------------------ | ---------------------------------------- |
+| `climate`        | `Group` (thermostats)          | Full thermostat control with temperature dial |
+| `binary_sensor`  | `Contact`                      | Door/window sensors                      |
+| `sensor`         | `String`, `Number`, `DateTime` | Read-only values                         |
+| `number`         | `Number:Temperature`           | Controllable temperature setpoints       |
+| `select`         | `String` (with options)        | Mode selection (Manual, Schedule, etc.)  |
+| `switch`         | `Switch`                       | On/off switches                          |
+| `cover`          | `Rollershutter`                | Blinds/shutters                          |
+| `device_tracker` | `Location`                     | GPS tracking                             |
+| `light`          | `Color`, `Dimmer`              | Lights with color/brightness             |
+| `media_player`   | `Player`                       | Media controls                           |
 
-## HACS Installation
+## Features
 
-1. Go to http://homeassistant.local:8123/hacs/integrations
-1. Add `https://github.com/KingKongKent/Hacs-openhab` custom integration repository
-1. Download the openHAB repository
-1. Restart Home Assistant
-1. Go to http://homeassistant.local:8123/config/integrations and add new integration
-1. Choose "openHAB" from the list and follow the config flow steps
+### Climate/Thermostat Support
+- Full climate entity with temperature dial UI (like MELCloud, Tado, etc.)
+- Mode-based temperature control (Manual, Schedule, Away, Vacation, Frost Protection)
+- Automatic temperature setpoint selection based on current mode
+- Preset modes dynamically generated from openHAB command options
+- Works with Danfoss and similar smart thermostats
 
-## Manual Installation
+### Device Grouping
+- Entities are automatically grouped by openHAB Groups
+- Thermostats appear as a single device with all related entities
+- Clean device organization in Home Assistant
 
-1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
-2. If you do not have a `custom_components` directory (folder) there, you need to create it.
-3. In the `custom_components` directory (folder) create a new folder called `openhab`.
-4. Download _all_ the files from the `custom_components/openhab/` directory (folder) in this repository.
-5. Place the files you downloaded in the new directory (folder) you created.
-6. Restart Home Assistant
-7. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "openHAB"
+### Authentication
+- Supports API token authentication
+- Compatible with openHAB 4.x security model
 
-Using your HA configuration directory (folder) as a starting point you should now also have this:
+## Installation
 
-```text
-custom_components/openhab/translations/en.json
-custom_components/openhab/translations/nb.json
-custom_components/openhab/translations/sensor.nb.json
-custom_components/openhab/__init__.py
-custom_components/openhab/api.py
-custom_components/openhab/binary_sensor.py
-custom_components/openhab/config_flow.py
-custom_components/openhab/const.py
-custom_components/openhab/manifest.json
-custom_components/openhab/sensor.py
-custom_components/openhab/switch.py
-```
+### HACS (Recommended)
 
-## Configuration is done in the UI
+1. Go to HACS → Integrations
+2. Click the three dots menu → Custom repositories
+3. Add `https://github.com/KingKongKent/Hacs-openhab` as an Integration
+4. Search for "openHAB" and download
+5. Restart Home Assistant
+6. Go to Settings → Devices & Services → Add Integration → openHAB
 
-<!---->
+### Manual Installation
 
-## Icons
+1. Download the `custom_components/openhab/` folder from this repository
+2. Copy it to your Home Assistant `config/custom_components/` directory
+3. Restart Home Assistant
+4. Add the integration via Settings → Devices & Services → Add Integration → openHAB
 
-To show the icons, we are taking openHAB Items "category" field and then matching its value with predefined map (based on classic iconset and Material Design Icons). If none is returned, we proceed with checking the Item's type (Switch, String, Number, Contact and so on) - all of these have their own icon as well.
+## Configuration
 
-## Device classes
+Configuration is done entirely through the UI. You will need:
+- Your openHAB server URL (e.g., `http://192.168.1.100:8080`)
+- An API token (create one in openHAB: Settings → API Security)
 
-Device class of each Entity is assigned dynamically based on Items name or label.
+## Icons & Device Classes
 
-## Changes in openHAB Items
+- Icons are automatically assigned based on openHAB Item categories (Material Design Icons)
+- Device classes are determined dynamically from Item names and labels
+- Supports the openHAB classic iconset mapping
 
-When you add/remove Items in openHAB, simply reload the integration in Home Assistant. New entities will appear automatically after reloading the custom component.
+## Updating Items
 
-## Contributions are welcome!
+When you add or remove Items in openHAB, reload the integration in Home Assistant to discover new entities.
 
-If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+## Contributions
+
+Contributions are welcome! This is a community-maintained fork.
 
 ## Credits
 
-This integration is based on the original work by [Kuba Wolanin](https://github.com/kubawolanin/ha-openhab).
+Based on the original work by [Kuba Wolanin](https://github.com/kubawolanin/ha-openhab).
 
 ---
 
