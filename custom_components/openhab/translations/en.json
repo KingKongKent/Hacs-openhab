@@ -3,7 +3,7 @@
         "step": {
             "user": {
                 "title": "openHAB",
-                "description": "If you need help with the configuration have a look here: https://github.com/kubawolanin/ha-openhab",
+                "description": "Enter your openHAB server URL and authentication type.",
                 "data": {
                     "base_url": "Base URL",
                     "auth_type": "Authentication type"
@@ -11,7 +11,7 @@
             },
             "credentials": {
                 "title": "openHAB",
-                "description": "How to generate a API Token: https://www.openhab.org/docs/configuration/apitokens.html",
+                "description": "Enter your credentials. For API Token, generate one in openHAB under Settings > API Tokens.",
                 "data": {
                     "username": "Username",
                     "password": "Password",
